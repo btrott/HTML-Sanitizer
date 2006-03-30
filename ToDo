@@ -1,0 +1,7 @@
+To test:
+* entities like &nbsp;
+* utf-8 stuff
+
+To do:
+* refactoring: create Serializer and Token classes
+* move all rule stuff into a RuleSet class

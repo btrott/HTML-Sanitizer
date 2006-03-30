@@ -1,0 +1,35 @@
+# $Id$
+
+Revision history for HTML::Sanitizer
+
+0.10  2006.04.01
+    - BACKWARDS INCOMPATIBLE: converted to use HTML::TokeParser internally,
+      rather than HTML::TreeBuilder.
+    - BACKWARDS INCOMPATIBLE: removed HTML::Sanitizer->sanitize_tree method.
+      For now, at least.
+    - Added more tests.
+
+0.04
+    - fixed security issue with nested evil tags not being properly
+      filtered
+
+0.03
+    - function names changed: s/filter_as/filter/ -- I reserve the
+      right to do this again until version 1 is released
+    - documentation fixes
+    - added support for HTML::Element element replacements
+    - allowed attribute subroutines access to the attr's value in $_
+
+0.02
+    - cpan#2404: removed spurious requirement for Perl 5.8
+    - cpan#2405 and #2406: better documentation for permit and deny
+        arguments
+    - cpan#2993: documentation fix for XSS problem in examples
+    - cpan#2992: XSS problem with partial HTML tags in text nodes 
+        corrected with HTML::Entities within all text nodes
+    - "preserve_children" flag should work as expected now, with
+        no caveats
+
+0.01  Sat Apr  5 17:17:24 2003
+    - original version; created by h2xs 1.22 with options
+        -Xn HTML::Sanitizer

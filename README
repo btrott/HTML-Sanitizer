@@ -1,0 +1,28 @@
+$Id$
+
+This is HTML::Sanitizer, providing a simple interface for cleaning and
+sanitizing (x)HTML.
+
+PREREQUISITES
+
+    * HTML::TokeParser
+    * HTML::Tagset
+    * HTML::Entities
+
+INSTALLATION
+
+HTML::Sanitizer installation is straightforward. If your CPAN shell
+is set up, you should just be able to do
+
+    % perl -MCPAN -e 'install HTML::Sanitizer'
+
+Download it, unpack it, then build it as per the usual:
+
+    % perl Makefile.PL
+    % make && make test
+
+Then install it:
+
+    % make install
+
+Six Apart / cpan@sixapart.com
