@@ -129,60 +129,68 @@ sub sanitize {
     my $parser = HTML::TokeParser->new($stream)
         or croak "Parsing stream $stream failed";
     while (my $token = $parser->get_token) {
-        if ($token->[0] eq 'S') {
-            my $tag = $token->[1];
-            my $rule = $sanitizer->choose_rule_for($tag);
-
-            ## If the $rule is defined and true, we need to apply it.
-            if ($rule) {
-                $sanitizer->sanitize_attributes($token);
-
-                if (ref($rule) eq 'CODE') {
-                    my $res = $rule->($token);
-                    next unless $res;
-                    if (ref($res) eq 'SCALAR') {
-                        $out .= $$res;
-                        $sanitizer->skip_node($parser, $tag);
-                        next;
-                    }
-                }
-
-                elsif (ref($rule) eq 'HTML::Element') {
-                    $sanitizer->merge_element_with_token($token, $rule);
-
-                    if (my @list = $rule->content_list) {
-                        $sanitizer->skip_node($parser, $tag);
-                        $parser->unget_token(
-                                [ 'T', join('', @list) ],
-                                [ 'E', $tag ]
-                            );
-                    }
-                }
-
-                $out .= $sanitizer->serialize_token($token);
-            } elsif (defined $rule) {
-                ## $rule == 0 means to skip this element, but keep its
-                ## children.
-                next;
-            } else {
-                ## $rule == undef means to skip this entire node in the tree.
-                $sanitizer->skip_node($parser, $tag);
-                next;
-            }
-        } elsif ($token->[0] eq 'E') {
-            my $tag = $token->[1];
-            my $rule = $sanitizer->choose_rule_for($tag);
-            if (ref($rule) eq 'HTML::Element') {
-                $out .= '</' . $rules->{$tag}->tag . '>';
-            } elsif ($rule) {
-                $out .= '</' . $tag . '>';
-            }
-        } elsif ($token->[0] eq 'T') {
-            $out .= $encoder->($token->[1]);
-        }
+        my $res = $sanitizer->sanitize_token($parser, $token) or next;
+        $out .= $res;
     }
 
     $out;
+}
+
+sub sanitize_token {
+    my $sanitizer = shift;
+    my($parser, $token) = @_;
+    my $rules = $sanitizer->{rules};
+    my $encoder = $sanitizer->{encoder};
+    if ($token->[0] eq 'S') {
+        my $tag = $token->[1];
+        my $rule = $sanitizer->choose_rule_for($tag);
+
+        ## If the $rule is defined and true, we need to apply it.
+        if ($rule) {
+            $sanitizer->sanitize_attributes($token);
+
+            if (ref($rule) eq 'CODE') {
+                my $res = $rule->($token);
+                return unless $res;
+                if (ref($res) eq 'SCALAR') {
+                    $sanitizer->skip_node($parser, $tag);
+                    return $$res;
+                }
+            }
+
+            elsif (ref($rule) eq 'HTML::Element') {
+                $sanitizer->merge_element_with_token($token, $rule);
+
+                if (my @list = $rule->content_list) {
+                    $sanitizer->skip_node($parser, $tag);
+                    $parser->unget_token(
+                            [ 'T', join('', @list) ],
+                            [ 'E', $tag ]
+                        );
+                }
+            }
+
+            return $sanitizer->serialize_token($token);
+        } elsif (defined $rule) {
+            ## $rule == 0 means to skip this element, but keep its
+            ## children.
+            return;
+        } else {
+            ## $rule == undef means to skip this entire node in the tree.
+            $sanitizer->skip_node($parser, $tag);
+            return;
+        }
+    } elsif ($token->[0] eq 'E') {
+        my $tag = $token->[1];
+        my $rule = $sanitizer->choose_rule_for($tag);
+        if (ref($rule) eq 'HTML::Element') {
+            return '</' . $rules->{$tag}->tag . '>';
+        } elsif ($rule) {
+            return '</' . $tag . '>';
+        }
+    } elsif ($token->[0] eq 'T') {
+        return $encoder->($token->[1]);
+    }
 }
 
 sub sanitize_attributes {
