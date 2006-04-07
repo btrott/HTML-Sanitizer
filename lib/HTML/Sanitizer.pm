@@ -5,7 +5,7 @@ use strict;
 
 our $VERSION = '0.10';
 
-use fields qw( rules );
+use fields qw( rules encoder );
 
 use Carp qw( croak );
 use HTML::TokeParser;
@@ -16,10 +16,18 @@ sub new {
     my $class = shift;
     my $sanitizer = fields::new($class);
     $sanitizer->{rules} = ref($_[0]) ? shift : { @_ };
+    $sanitizer->{encoder} = sub { 
+        encode_entities($_[0], q('<>"&));
+    };
     $sanitizer;
 }
 
 sub rules { $_[0]->{rules} }
+
+sub set_encoder {
+    my $sanitizer = shift;
+    $sanitizer->{encoder} = $_[0];
+}
 
 sub permit {
     my $sanitizer = shift;
@@ -114,10 +122,12 @@ sub sanitize {
     my($stream) = @_;
 
     my $rules = $sanitizer->{rules};
+    my $encoder = $sanitizer->{encoder};
 
     my $out = '';
 
-    my $parser = HTML::TokeParser->new($stream);
+    my $parser = HTML::TokeParser->new($stream)
+        or croak "Parsing stream $stream failed";
     while (my $token = $parser->get_token) {
         if ($token->[0] eq 'S') {
             my $tag = $token->[1];
@@ -168,7 +178,7 @@ sub sanitize {
                 $out .= '</' . $tag . '>';
             }
         } elsif ($token->[0] eq 'T') {
-            $out .= encode_entities($token->[1], q('<>"&));
+            $out .= $encoder->($token->[1]);
         }
     }
 
@@ -271,8 +281,9 @@ sub serialize_token {
     my($token) = @_;
     my $out = '<' . $token->[1];
     my $attr = $token->[2];
+    my $encoder = $sanitizer->{encoder};
     for my $key (keys %$attr) {
-        my $val = encode_entities($attr->{$key}, q('<>"&));
+        my $val = $encoder->($attr->{$key});
         $out .= qq( $key="$val");
     }
     $out .= $HTML::Tagset::emptyElement{$token->[1]} ? ' />' : '>';
