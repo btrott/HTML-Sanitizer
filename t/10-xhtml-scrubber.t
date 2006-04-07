@@ -5,7 +5,7 @@ use HTML::Sanitizer;
 use HTML::Element;
 use Test::More;
 
-plan tests => 19;
+plan tests => 20;
 
 our %AllowedTags = map { $_ => 1 } qw(
   a abbr acronym address area b bdo big blockquote br caption center cite code
@@ -75,12 +75,16 @@ is_cleaned '<strip>Hi</strip>', 'Hi', 'single element is stripped';
 
 is_cleaned '<rmnode>Hi</rmnode>', '', 'entire node is removed';
 
+is_cleaned '<foo>Hi</foo>', '<bar />', 'foo node is replaced with string';
+
 sub sanitizer {
     my $safe = HTML::Sanitizer->new(
             %AllowedTags,
 
             strip  => 0,
             rmnode => undef,
+
+            foo => sub { \'<bar />' },
 
             applet => HTML::Element->new('object'),
             b      => HTML::Element->new('strong'),

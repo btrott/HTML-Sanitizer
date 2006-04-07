@@ -128,7 +128,13 @@ sub sanitize {
                 $sanitizer->sanitize_attributes($token);
 
                 if (ref($rule) eq 'CODE') {
-                    next unless $rule->($token);
+                    my $res = $rule->($token);
+                    next unless $res;
+                    if (ref($res) eq 'SCALAR') {
+                        $out .= $$res;
+                        $sanitizer->skip_node($parser, $tag);
+                        next;
+                    }
                 }
 
                 elsif (ref($rule) eq 'HTML::Element') {
@@ -176,15 +182,18 @@ sub sanitize_attributes {
     my $tag = $token->[1];
     my $attributes = $token->[2];
 
+    my $rules = $sanitizer->{rules};
+
     for my $attr (keys %$attributes) {
         $attr = lc $attr;
 
         my $r;
         ATTR_SEARCH: for my $o ($tag, "_", "*") {
-            if (ref $sanitizer->{rules}->{$o}) {
+            if (ref $rules->{$o}) {
                 for my $i ($attr, '*') {
-                    if (exists($sanitizer->{rules}->{$o}->{$i})) {
-                        $r = $sanitizer->{rules}->{$o}->{$i};
+                    if (ref($rules->{$o}) eq 'HASH' &&
+                        exists($rules->{$o}{$i})) {
+                        $r = $rules->{$o}{$i};
                         last ATTR_SEARCH;
                     }
                 }
