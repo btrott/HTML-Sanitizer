@@ -164,15 +164,8 @@ sub sanitizer {
 
 sub add_style {
     my($elem, $new) = @_;
-    if (ref($elem) eq 'HTML::Element') {
-        if (my $style = $elem->attr('style')) {
-            $new .= '; ' . $style;
-        }
-        $elem->attr(style => $new);
-    } else {
-        if (my $style = $elem->[2]{style}) {
-            $new .= '; ' . $style;
-        }
-        $elem->[2]{style} = $new;
+    if (my $style = $elem->[2]{style}) {
+        $new .= '; ' . $style;
     }
+    $elem->[2]{style} = $new;
 }
