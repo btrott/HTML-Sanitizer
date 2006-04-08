@@ -268,6 +268,7 @@ sub merge_element_with_token {
 sub skip_node {
     my $sanitizer = shift;
     my($parser, $tag) = @_;
+    return if $HTML::Tagset::emptyElement{$tag};
     my $t;
     my $level = 1;
     while (1) {
