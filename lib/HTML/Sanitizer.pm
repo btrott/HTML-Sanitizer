@@ -290,7 +290,7 @@ sub serialize_token {
     my $out = '<' . $token->[1];
     my $attr = $token->[2];
     my $encoder = $sanitizer->{encoder};
-    for my $key (keys %$attr) {
+    for my $key (sort keys %$attr) {
         my $val = $encoder->($attr->{$key});
         $out .= qq( $key="$val");
     }

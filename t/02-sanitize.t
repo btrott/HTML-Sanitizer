@@ -43,7 +43,7 @@ is $safe->filter_xml_fragment('<p>ok</p><b>content b</b>'), '<p>ok</p><strong>co
 
 is $safe->filter_xml_fragment('<p>ok</p><i attr="old_value">content i</i>'), '<p>ok</p><em attr="new_value">content i</em>', "HTML::Element rule, attribute overlay";
 
-is $safe->filter_xml_fragment('<p>ok</p><i attr_ok="attr value" attr="old_value">content i</i>'), '<p>ok</p><em attr_ok="attr value" attr="new_value">content i</em>', "HTML::Element rule, attribute overlay with existing OK attribute";
+is $safe->filter_xml_fragment('<p>ok</p><i attr_ok="attr value" attr="old_value">content i</i>'), '<p>ok</p><em attr="new_value" attr_ok="attr value">content i</em>', "HTML::Element rule, attribute overlay with existing OK attribute";
 
 is $safe->filter_xml_fragment('<p>ok</p><i attr_bad="attr value" attr="old_value">content i</i>'), '<p>ok</p><em attr="new_value">content i</em>', "HTML::Element rule, attribute overlay with existing bad attribute";
 
