@@ -120,19 +120,13 @@ sub filter_xml_fragment { shift->sanitize(\$_[0]) }
 sub sanitize {
     my $sanitizer = shift;
     my($stream) = @_;
-
-    my $rules = $sanitizer->{rules};
-    my $encoder = $sanitizer->{encoder};
-
     my $out = '';
-
     my $parser = HTML::TokeParser->new($stream)
         or croak "Parsing stream $stream failed";
     while (my $token = $parser->get_token) {
         my $res = $sanitizer->sanitize_token($parser, $token) or next;
         $out .= $res;
     }
-
     $out;
 }
 
