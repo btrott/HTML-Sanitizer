@@ -183,7 +183,8 @@ sub sanitize_token {
             return '</' . $tag . '>';
         }
     } elsif ($token->[0] eq 'T') {
-        return $encoder->($token->[1]);
+        my $text = $token->[2] ? $token->[1] : decode_entities($token->[1]);
+        return $encoder->($text);
     }
 }
 

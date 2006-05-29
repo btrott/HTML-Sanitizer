@@ -3,7 +3,7 @@
 use strict;
 use HTML::Sanitizer;
 use HTML::Element;
-use Test::More tests => 40;
+use Test::More tests => 42;
 
 my $safe = HTML::Sanitizer->new(
     p     => 1,
@@ -28,6 +28,10 @@ my $safe = HTML::Sanitizer->new(
 );
 
 is $safe->filter_xml_fragment('<p>content p</p>'), '<p>content p</p>',"'permit' rule";
+
+is $safe->filter_xml_fragment('<p>foo &amp; bar</p>'), '<p>foo &amp; bar</p>', "HTML entities in a tag content";
+
+is $safe->filter_xml_fragment('<a attr1="http://example/?foo=bar&amp;baz=quox">foo &amp; bar</a>'), '<a attr1="http://example/?foo=bar&amp;baz=quox">foo &amp; bar</a>', "HTML entities in a tag content and attributes";
 
 is $safe->filter_xml_fragment('<p attr_ok="attr value">content p</p>'), '<p attr_ok="attr value">content p</p>', "'permit' rule, checking OK attributes";
 
