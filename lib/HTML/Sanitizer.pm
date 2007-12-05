@@ -124,7 +124,8 @@ sub sanitize {
     my $parser = HTML::TokeParser->new($stream)
         or croak "Parsing stream $stream failed";
     while (my $token = $parser->get_token) {
-        my $res = $sanitizer->sanitize_token($parser, $token) or next;
+        my $res = $sanitizer->sanitize_token($parser, $token);
+        defined($res) or next;
         $out .= $res;
     }
     $out;
@@ -181,6 +182,8 @@ sub sanitize_token {
             return '</' . $rules->{$tag}->tag . '>';
         } elsif ($rule) {
             return '</' . $tag . '>';
+        } else {
+            return;
         }
     } elsif ($token->[0] eq 'T') {
         my $text = $token->[2] ? $token->[1] : decode_entities($token->[1]);
