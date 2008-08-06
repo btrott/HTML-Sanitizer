@@ -197,10 +197,13 @@ sub sanitize_token {
             return;
         }
     } elsif ($token->[0] eq 'T') {
-        my $text = $token->[2]             ? $token->[1]
-                 : $sanitizer->{utf8_mode} ? $sanitizer->decode_entities_utf8($token->[1])
-                 :                           HTML::Entities::decode($token->[1]);
-        return $encoder->($text);
+        if ( $token->[2] ) {
+            return $token->[1];
+        } else { 
+            my $text = $sanitizer->{utf8_mode} ? $sanitizer->decode_entities_utf8($token->[1])
+                     :                           HTML::Entities::decode($token->[1]);
+            return $encoder->($text);
+        }
     }
 }
 
