@@ -3,7 +3,7 @@
 use strict;
 use HTML::Sanitizer;
 use HTML::Element;
-use Test::More tests => 42;
+use Test::More tests => 43;
 
 my $safe = HTML::Sanitizer->new(
     p     => 1,
@@ -134,3 +134,6 @@ is $safe->sanitize(\'<p>Paragraphs<br />with line breaks</p>'), '<p>Paragraphs<b
 
 $safe->permit_only('p');
 is $safe->sanitize(\'<p>The pièce de résistance. A veritable tongue bath to those who sign the cheques. </p>'), '<p>The pièce de résistance. A veritable tongue bath to those who sign the cheques. </p>';
+
+$safe->utf8_mode(1);
+is $safe->sanitize(\'<p>The pièce de résistance. A veritable tongue bath to those who sign the cheques &hearts;</p>'), "<p>The pièce de résistance. A veritable tongue bath to those who sign the cheques \xe2\x99\xa5</p>";

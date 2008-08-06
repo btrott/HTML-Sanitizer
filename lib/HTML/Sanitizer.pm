@@ -5,24 +5,35 @@ use strict;
 
 our $VERSION = '0.10';
 
-use fields qw( rules encoder );
+use fields qw( rules encoder utf8_mode );
 
 use Carp qw( croak );
 use HTML::TokeParser;
-use HTML::Entities;
+use HTML::Entities ();
 use HTML::Tagset;
+
+my %entity2char_utf8 = %HTML::Entities::entity2char;
+for my $k (keys %entity2char_utf8) {
+    utf8::encode($entity2char_utf8{$k});
+}
 
 sub new {
     my $class = shift;
     my $sanitizer = fields::new($class);
     $sanitizer->{rules} = ref($_[0]) ? shift : { @_ };
     $sanitizer->{encoder} = sub { 
-        encode_entities($_[0], q('<>"&));
+        HTML::Entities::encode($_[0], q('<>"&));
     };
     $sanitizer;
 }
 
 sub rules { $_[0]->{rules} }
+
+sub utf8_mode {
+    my $sanitizer = shift;
+    $sanitizer->{utf8_mode} = shift if @_;
+    $sanitizer->{utf8_mode};
+}
 
 sub set_encoder {
     my $sanitizer = shift;
@@ -186,9 +197,17 @@ sub sanitize_token {
             return;
         }
     } elsif ($token->[0] eq 'T') {
-        my $text = $token->[2] ? $token->[1] : decode_entities($token->[1]);
+        my $text = $token->[2]             ? $token->[1]
+                 : $sanitizer->{utf8_mode} ? $sanitizer->decode_entities_utf8($token->[1])
+                 :                           HTML::Entities::decode($token->[1]);
         return $encoder->($text);
     }
+}
+
+sub decode_entities_utf8 {
+    my($sanitizer, $text) = @_;
+    HTML::Entities::_decode_entities($text, \%entity2char_utf8); # in-place
+    $text;
 }
 
 sub sanitize_attributes {
@@ -429,6 +448,28 @@ the document tree.
 =item ignore_only(...)
 
 Like ignore, but assumes a default 'permit' policy.  See 'deny_only'.
+
+=item utf8_mode(...)
+
+When your input HTML contains UTF8 strings and HTML entities (like
+C<&hearts;>), you first need to decode the HTML with
+I<Encode::encode_utf8> to set the utf8 flag so decoding HTML
+entities to Unicode should work.
+
+Alternatively, you can use I<utf8_mode> to tell HTML::Sanitizer that
+you're dealing with utf-8 byte string.
+
+Example: The Unicode character "\x{2665}" is "\xE2\x99\xA5" when UTF-8
+encoded. The character can also be represented by the entity
+"&hearts;" or "&#x2665".  If you feed the sanitizer:
+
+  $s->sanitize(\"\xE2\x99\xA5&hearts;");
+
+then the result will be reported as "\xE2\x99\xA5\x{2665}" without
+I<utf8_mode> enabled (default), but as "\xE2\x99\xA5\xE2\x99\xA5" when
+enabled. The later string is what you want.
+
+See L<HTML::Parser> for more.
 
 =back
 
